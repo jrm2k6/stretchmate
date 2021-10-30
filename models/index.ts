@@ -23,8 +23,6 @@ export default function connectToPostgres(): DatabaseHandler {
       Sequelize: Sequelize,
       sequelize: sequelize,
     }
-
-    console.log('Created db');
   }
 
   return db;
