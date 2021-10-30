@@ -4,7 +4,7 @@ import withModels from '../models/withModels.hoc'
 import { Step } from '../models/step.model'
 import { Stretch } from '../models/stretch.model'
 import { Stretch as StretchType, Step as StepType } from '../models/models.dto'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export const getServerSideProps: GetServerSideProps = withModels(async () => {
   const stretches = await Stretch.findAll({ include: [Step] });
@@ -22,10 +22,30 @@ type SessionProps = {
 
 const StretchViewer = ({ stretch }: { stretch: StretchType }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const timeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setCurrentStepIndex(0);
   }, [stretch])
+
+  useEffect(() => {
+    const numSteps = stretch.steps.length || 0
+    if (numSteps > 1) {
+      timeout.current = setInterval(() => {
+        console.log(`interval run for stretch ${stretch.name} ${currentStepIndex} ${numSteps}`);
+        setCurrentStepIndex(
+          currentStepIndex => numSteps - 1 === currentStepIndex ? 0 : currentStepIndex + 1
+        );
+      }, 3000)
+    }
+
+    return () => {
+      if (timeout.current) {
+        clearInterval(timeout.current);
+        timeout.current = null
+      };
+    }
+  }, [stretch, currentStepIndex])
 
   const currentStep = useMemo(() => {
     const currentStep = (stretch.steps || []).find((_, index) => index === currentStepIndex)
